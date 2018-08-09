@@ -47,6 +47,7 @@ Copy `arcos/rendered/*` to `~/.themes`.
 
 ![Overview](https://github.com/jmsdnns/arcos/raw/master/screenshots/overview-light.png)
 
+![App List](https://github.com/jmsdnns/arcos/raw/master/screenshots/applist-light.png)
 
 ![Search](https://github.com/jmsdnns/arcos/raw/master/screenshots/search-light.png)
 
@@ -57,5 +58,6 @@ Copy `arcos/rendered/*` to `~/.themes`.
 
 ![Overview](https://github.com/jmsdnns/arcos/raw/master/screenshots/overview-dark.png)
 
+![App List](https://github.com/jmsdnns/arcos/raw/master/screenshots/applist-dark.png)
 
 ![Search](https://github.com/jmsdnns/arcos/raw/master/screenshots/search-dark.png)
