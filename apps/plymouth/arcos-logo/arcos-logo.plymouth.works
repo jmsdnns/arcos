@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=ArcOS Logo
+Description=A theme that features an animated ArcOS logo.
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/arcos-logo
+ScriptFile=/usr/share/plymouth/themes/arcos-logo/arcos-logo.script

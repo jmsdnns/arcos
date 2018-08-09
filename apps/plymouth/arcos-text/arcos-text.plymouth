@@ -1,0 +1,11 @@
+[Plymouth Theme]
+Name=ArcOS Text
+Description=Text mode theme based on arcos-logo theme
+ModuleName=arcos-text
+
+[arcos-text]
+title=ArcOS
+black=0x262b36
+white=0xffffff
+brown=0x5c616c
+blue=0x5294e2

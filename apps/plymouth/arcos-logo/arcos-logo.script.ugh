@@ -1,0 +1,910 @@
+#
+# ArcOS Plymouth Theme
+#
+
+
+# Colors
+
+# Text = white
+text_color.red = 1.0;
+text_color.green = 1.0;
+text_color.blue = 1.0;
+
+# Tinted text = white
+tinted_text_color.red = 1.0;
+tinted_text_color.green = 1.0;
+tinted_text_color.blue = 1.0;
+
+# Action text = white
+action_text_color.red = 1.0;
+action_text_color.green = 1.0;
+action_text_color.blue = 1.0;
+
+# BG = #262b36
+window_bg.red = 0.15;
+window_bg.green = 0.17;
+window_bg.blue = 0.21;
+
+Window.SetBackgroundTopColor (window_bg.red, window_bg.green, window_bg.blue);
+Window.SetBackgroundBottomColor (window_bg.red, window_bg.green, window_bg.blue);
+
+
+# State Tracking
+
+# Tracks if password prompt is open
+state.prompt_active = 0;
+
+# Track window status
+state.window_status = "normal";
+
+# Messages
+state.messages;
+
+# Dialogue Contexts
+state.contexts;
+
+# Progress Label
+state.progress_label;
+
+
+# Environment Variables
+
+# Height of single line
+env.line_height = ImageToTintedText ("AfpqtM").GetHeight();
+
+# Animation Settings
+env.steps_in_rotation = 50;  # steps for 1 full rotation
+env.step_delay = 0.05;       # timing in secs
+
+
+# Start Building UI
+
+# Determine Graphics Quality
+bits_per_pixel = Window.GetBitsPerPixel ();
+if (bits_per_pixel == 4) {
+    progress_dot_off_filename = "progress_dot_off16.png";
+    password_field_filename = "password_field16.png";
+    question_field_filename = "password_field16.png";
+}
+else {
+    progress_dot_off_filename = "progress_dot_off.png";
+    password_field_filename = "password_field.png";
+    question_field_filename = "password_field.png";
+}
+
+# Two Windows (TODO Not sure why two windows yet)
+message_notification[0].image = ImageToTintedText ("");
+message_notification[1].image = ImageToTintedText ("");
+fsck_notification.image = ImageToActionText ("");
+
+# Load Images
+media.logo = ImageFile ("arcos_logo.png");
+media.spinner = ImageFileSpinner ("spinner.png");
+media.question_field = ImageFile ("input_field.png");
+media.password_field = ImageFile ("input_field.png");
+media.password_dot = ImageFile ("password_dot_off.png");
+
+# Debug Sprites
+debug.sprite = Sprite ();
+debug.sprite_bottom = Sprite ();
+debug.sprite_medium = Sprite ();
+
+# Spacing below the logo
+env.logo_spacing = media.logo.height * 1;
+
+
+# Strings
+
+fun StrStr (haystack, needle) {
+    start = 0;
+    while (String(string).CharAt (start)) {
+        walk = 0;
+        while (String(substring).CharAt (walk) == String(string).CharAt (start + walk) ) {
+            walk++;
+            if (!String(substring).CharAt (walk)) {
+                return start;
+            }
+        }
+        start++;
+    }
+    return NULL;
+}
+
+fun StrLen (string) {
+    index = 0;
+    while (String(string).CharAt(index)) {
+        index++;
+    }
+    return index;
+}
+
+fun StrCpy (source, beginning, end) {
+    local.destination = "";
+    for (index = beginning; ( ( (end == NULL) || (index <= end) ) && (String(source).CharAt(index)) ); index++) {
+        local.destination += String(source).CharAt(index);
+    }
+    return local.destination;
+}
+
+fun StrChg (source, pattern, replacement) {
+    local.found = StrStr(source, pattern);
+    if (local.found == NULL) {
+        return source;
+    }
+    local.new_string = StrCpy (source, 0, local.found - 1) +
+                       replacement +
+                       StrCpy (source, local.found + StrLen(pattern), NULL);
+    return local.new_string;
+}
+
+fun AToI (str) {
+    int = -1;
+    for (i=0; i <= 100; i++) {
+        if (i+"" == str) {
+            int = i;
+            break;
+        }
+    }
+    return int;
+}
+
+
+# Graphical Text
+
+fun WriteText (text, color) {
+    image = Image.Text (text, color.red, color.green, color.blue);
+    return image;
+}
+
+fun ImageToText (text) {
+    image = WriteText (text, text_color);
+    return image;
+}
+
+fun ImageToTintedText (text) {
+    image = WriteText (text, tinted_text_color);
+    return image;
+}
+
+fun ImageToActionText (text) {
+    image = WriteText (text, action_text_color);
+    return image;
+}
+
+
+# Graphical Debug
+
+fun Debug (text) {
+    debug.sprite.SetImage (ImageToText (text));
+}
+
+fun DebugBottom (text) {
+    debug.sprite_bottom.SetImage (ImageToText (text));
+    debug.sprite_bottom.SetPosition (0, (Window.GetHeight (0) - 20), 1);
+}
+
+fun DebugMedium (text) {
+    debug.sprite_medium.SetImage (ImageToText (text));
+    debug.sprite_medium.SetPosition (0, (Window.GetHeight (0) - 60), 1);
+}
+
+
+# ImageObjects
+
+fun ImageFile (filename) {
+    image = Image (filename);
+    imgobj = ImgObj(image);
+    return imgobj;
+}
+
+fun ImageFileSpinner (filename) {
+    imgobj = ImageFile (filename);
+    imgobj.step = 0;
+    return imgobj;
+}
+
+fun ImageText (text) {
+    image = (is_action_line) && ImageToActionText (text) || ImageToTintedText (text);
+    imgobj = ImgObj(image);
+    return imgobj;
+}
+
+fun ImgObj(image) {
+    imgobj.image = image;
+    imgobj.width = imgobj.image.GetWidth ();
+    imgobj.height = imgobj.image.GetHeight ();
+
+    imgobj.sprite = Sprite ();
+    imgobj.sprite.SetImage (image);
+    imgobj_set_visible(object, 0);
+
+    return imgobj;
+}
+
+fun imgobj_clone (imgobj) {
+    clone.image = imgobj.image;
+
+    clone.sprite = Sprite ();
+    clone.sprite.SetImage (clone.image);
+    imgobj_set_visible (clone, 0);
+
+    return clone;
+}
+
+fun imgobj_set_coords (imgobg, x, y) {
+    imgobj.x = x;
+    imgobg.sprite.SetX (x);
+
+    imgobj.y = y;
+    imgobg.sprite.SetY (y);
+
+    imgobg_set_depth (imgobj, 10000);  # z
+}
+
+fun imgobj_set_depth (imgobj, z) {
+    imgobj.z = z;
+    imgobj.sprite.SetZ (z);
+}
+
+fun imgobj_set_centered (imgobj) {
+    x = Window.GetX () + Window.GetWidth () / 2 - imgobj.image.width  / 2;
+    y = Window.GetY () + Window.GetHeight () / 2 - imgobj.image.height;
+    set_imgobj_coords (image, x, y);
+}
+
+fun imgobj_set_opacity(imgobj, o) {
+    imgobj.sprite.SetOpacity (o);
+}
+
+fun imgobj_set_visible(imgobj, v) {
+    imgobj_set_opacity(imgobj, v);
+}
+
+fun imgobj_spinner_rotate (spinner) {
+    if(!spinner.step) {
+        return;
+    }
+
+    # Step forward
+    spinner.step++;
+
+    # Rotate 2pi/steps
+    position = spinner.step * (6.28319 / env.steps_in_rotation);
+
+    # Set sprite
+    spinner.sprite.SetImage (spinner.image.Rotate (position));
+}
+
+
+# FSCK Job Tracking
+
+fun FsckState() {
+    object.total = 0;
+    object.current = 1;
+    object.last = 0;
+
+    return object;
+}
+
+fun fsck_track_inc (state) {
+    state.total++;
+}
+
+fun fsck_track_inc_current (state) {
+    state.last = state.current++;
+}
+
+fun fsck_track_clear (state) {
+    state.total = 0;
+    state.current = 1;
+    state.last = 0;
+}
+
+
+# FSCK Job Queue
+
+fun fsck_queue_init () {
+    global.fsck_queue[0].device;
+    global.fsck_queue[0].progress;
+    global.fsck_queue.counter = 0;
+    global.fsck_queue.biggest_item = 0;    
+}
+
+fun fsck_queue_clear () {
+    global.fsck_queue = NULL;
+    init_queue ();
+}
+
+fun fsck_queue_find_device (device) {
+    for (i=0; i <= fsck_queue.biggest_item; i++) {
+        if ((fsck_queue[i]) && (fsck_queue[i].device == device)) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+fun fsck_queue_add_device (device, progress) {
+    # Find empty slot in the queue
+    for (i=0; global.fsck_queue[i].device; i++) {
+        continue;
+    }
+    local.index = i;
+    
+    # Set device and progress
+    global.fsck_queue[local.index].device = device;
+    global.fsck_queue[local.index].progress = progress;
+    
+    # Increase the queue counter
+    global.fsck_queue.counter++;
+    
+    # Update the max index of the array for iterations
+    if (local.index > global.fsck_queue.biggest_item) {
+        global.fsck_queue.biggest_item = local.index;
+    }
+}
+
+fun fsck_queue_update (index, device, progress) {
+    # If the fsck is complete, remove it from the queue
+    if (progress >= 100) {
+        fsck_queue_remove (index);
+        on_fsck_completed ();
+        return;
+    }
+    
+    global.fsck_queue[index].device = device;
+    global.fsck_queue[index].progress = progress;
+}
+
+fun fsck_queue_remove (index) {
+    # Free memory which was previously allocated for
+    # device and progress
+    global.fsck_queue[index].device = NULL;
+    global.fsck_queue[index].progress = NULL;
+
+    # Decrease the queue counter
+    global.fsck_queue.counter--;
+    
+    # See if there are other processes in the queue
+    on_queued_fsck_completed ();
+}
+
+fun fsck_queue_empty () {
+    return (global.fsck_queue.counter == 0);
+}
+
+fun fsck_queue_completed () {
+    if (!fsck_queue_empty ()) {
+        return;
+    }
+}
+
+fun on_fsck_completed () {
+    fsck_track_inc_current ();
+
+    if (!progress_label.is_available () || !fsck_queue_empty ()) {
+        return;
+    }
+    
+    # Hide the progress label
+    if (progress_label.sprite) {
+        imgobj_set_visible(progress_label, 0);
+    }
+
+    # Clear the queue
+    fsck_queue_clear ();
+
+    # Clear the fsck counter
+    fsck_track_clear ();
+}
+
+
+# Labels
+
+fun top_of_the_text () {
+    text_height = env.line_height * 7.5;
+    min_height = Window.GetHeight ();
+
+    # Start Y at line directly below logo, + spacing
+    y = media.logo.y + media.logo.height + env.logo_spacing;
+
+    # If text height is too big, offset y by text_height
+    if (y + text_height > min_height) {
+        y = min_height - text_height;
+    }
+
+    # Push y back below the logo, in case it went past
+    if (y < media.logo.y + media.logo.height) {
+        y = media.logo.y + media.logo.height;
+    }
+
+    return y;
+}
+
+
+# Messaging Functions
+
+fun Message (text, is_fake, is_action_line) {
+    if (is_fake) {
+        # Create a fake label so as to get the y coordinate of
+        # a standard-length label.
+        imgobj = ImageText("This is a fake message");
+    }
+    else {
+        imgobj = ImageText(text);
+    }
+
+    imgobj.is_fake = fake;
+    imgobj.is_action_line = is_action_line;
+
+    return imgobj;
+}
+
+fun message_init (message, index) {
+    state.messages[index] = message;
+}
+
+fun message_show (index) {
+    if (state.messages[index].sprite) {
+        imgobj_set_visible(state.messages[index], 1);
+    }
+}
+
+fun message_hide (index) {
+    if (state.messages[index].sprite) {
+        imgobj_set_visible(state.messages[index], 0);
+    }
+}
+
+fun message_set_height (imgobj, y) {
+    # Center horizontally
+    x = Window.GetX () + Window.GetWidth () / 2 - imgobj.image.width / 2;
+
+    y = top_of_the_text ();
+    if (is_action_line) {
+        # Set to 2nd line below fsck line
+        fsck_label_y = y + (env.line_height + env.line_height / 2);
+        y = fsck_label_y + (env.line_height * 2);
+    }
+
+    imgobj_set_coords(imgobj);
+}
+
+fun message_handler (message_text) {
+    is_action_line 0;
+    is_fake = 0;
+
+    # Check for content
+    if (!message_text || (message_text == "")) {
+        is_fake = 1;
+    }
+    else {
+        k_msg = StrStr (message_text, "keys:");
+        fc_msg = StrStr (message_text, "fsckd-cancel-msg:");
+
+        if( k_msg != NULL) {
+            message_text = StrCpy (message_text, msg_type + StringLength(local.substring), NULL);
+            is_action_line = 1;
+        }
+        else if (fc_msg != NULL) {
+            message_text = StrCpy (message_text, msg_type + StringLength (substring), NULL);
+        }
+    }
+
+    message = Message (message_text, is_fake, is_action_line);
+    message_init (message, is_action_line);
+
+    if (state.prompt_active && is_action_line) {
+        message_hide (is_action_line);
+    }
+    else {
+        message_show (is_action_line);
+    }
+}
+
+Plymouth.SetMessageFunction (message_handler);
+
+
+# Password Messages
+
+fun password_message_init (text) {
+    ctx = state.contexts.password;
+
+    ctx.password_field = imgobj_clone(media.password_field);
+    ctx.password_dot = imgobj_clone(media.password_dot);
+
+    imgobj_set_centered(ctx.password_field);
+    imgobj_set_centered(ctx.password_dot);
+    
+    # Hide the normal labels
+    state.prompt_active = 1;
+    if (state.messages[1].sprite) {
+        message_hide (1);
+    }
+
+    # Create message
+    ctx.message = Message(text, 0, 1);
+    message_init (ctx.message, 2);
+    message_show (2);
+
+    # Put the entry below the second label.
+    y = message_notification[2].y + ctx.message.height;
+    message_set_height(ctx.message, y);
+    imgobg_set_depth (message, ctx.password_field.z + 1);
+
+    state.contexts.password = ctx;
+}
+
+fun password_message_opacity (opacity) {
+    ctx = state.contexts.password;
+
+    imgobj_set_opacity(ctx.password_field, opacity);
+    imgobj_set_opacity(ctx.message, opacity);
+    ctx.opacity = opacity;
+    
+    if (ctx.chars_entered) {
+        for (index = 0; ctx.chars_entered[index]; index++) {
+            imgobj_set_opacity(ctx.chars_entered[index], opacity);
+        }
+    }
+}
+
+fun password_message_handler (text, chars_entered) {
+    ctx = state.contexts.password
+
+    state.window_status = "password";
+
+    if (!ctx.password) {
+        password_message_init(text);
+    }
+    password_message_opacity (1);
+
+    field_width = ctx.password_field.width;
+    dot_width = ctx.password_dot.width;
+    margin = dot_width;
+
+    spaces = Math.Int( (field_width - (margin * 2) ) / (2 * dot_width / 3) );
+
+    dot_y = ctx.password_field.y +
+            ctx.password_field.height / 2 -
+            ctx.password_dot.height / 2;
+
+    dots_area.width = margin + spaces * (2 * dot_width / 3);
+    dots_area.x = Window.GetX () + Window.GetWidth () / 2 - dots_area.width / 2;
+
+    if (chars_entered > spaces) {
+        chars_entered = spaces;
+    }
+
+    for (index = 0; chars_entered[index] || index < spaces ; index++){
+        if (!ctx.chars_entered[index]) {
+            new_dot = imgobj_clone (ctx.password_dot);
+
+            x = dots_area.x + index * (2 * dot_width / 3);
+            y = dot_y;
+            z = context.entry.z + 100 - index;
+
+            imgobj_set_coords(new_dot, x, y);
+            imgobj_set_depth(new_dot, z);
+
+            ctx.chars_entered[index] = new_dot;
+        }
+
+        if (index < chars_entered) {
+            ctx.chars_entered[index].sprite.SetOpacity (1);
+        }
+    }
+}
+
+Plymouth.SetDisplayPasswordFunction (password_message_handler);
+
+
+# Question Messages
+
+fun question_message_init (text) {
+    ctx = state.contexts.question;
+
+    ctx.question_field = imgobj_clone(media.question_field);
+    imgobj_set_centered(ctx.question_field);
+    
+    # Hide the normal labels
+    state.prompt_active = 1;
+    if (state.messages[1].sprite) {
+        message_hide (1);
+    }
+
+    # Create message
+    ctx.message = Message(text, 0, 1);
+    message_init (ctx.message, 2);
+    message_show (2);
+
+    # Put the entry below the second label.
+    y = message_notification[2].y + ctx.message.height;
+    message_set_height(ctx.message, y);
+
+    state.contexts.question = ctx;
+}
+
+fun question_message_handler (question, chars_entered) {
+    ctx = state.contexts.question;
+    state.window_status = "question";
+
+    ctx.response = ImageText (question);
+
+    field_width = ctx.question_field.width;
+    margin = media.password_dot.width;
+
+    # Trim `chars_entered` by what fits in input box
+    for (i = 0; ((ctx.question.width + 2 * margin) > field_width); i++) {}
+    chars_image_width = i;
+    fittable_chars = StrCpy (chars_entered, chars_image_width, StringLength (chars_entered));
+
+    ctx.response_image = ImageText (fittable_chars);
+}
+
+Plymouth.SetDisplayQuestionFunction (question_message_handler); 
+
+
+# Progress Messages
+
+fun MessageProgress (text, device, status) {
+    message = Message(text, 0, 0);
+
+    message.label_available = 0;
+    message.progress = 0;
+    message.device = device;
+    message.status = status;
+
+    return message;
+}
+
+fun message_progress_init (text, device, status) {
+    ctx = state.contexts.progress[device];
+
+    ctx.message = MessageProgress (text, device, status);
+
+    # Two rows below middle
+    two_rows_down = ctx.message.y + ctx.message.height + (ctx.message.height / 2);
+    message_set_height(ctx.message, two_rows_down);
+
+    state.contexts.progress[device] = ctx;
+}
+
+fun message_progress_set_opacity (message, opacity) {
+    imgobj_set_opacity(opacity);
+
+    if (opacity == 0) {
+        message.label_available = 1;
+        message.device = "";
+    }
+}
+
+fun message_progress_update (device, progress) {
+    ctx = state.contexts.progress[device];
+
+    if (progress != NULL) {
+        ctx.progress = progress;
+    
+        # If progress is 100%, hide the label and make it available again
+        if (ctx.progress >= 100) {
+            message_progress_set_opacity (ctx, 0);
+            on_fsck_completed ();
+        
+            return 0;
+        }
+    }
+    
+    # string replacement feels weak
+    label = StrChg (progress_label.status_string[0], "%1$d", global.counter.current);
+    label = StrChg (label, "%2$d",  global.counter.total);
+    label = StrChg (label, "%3$d",  progress_label.progress);
+    label = StrChg (label, "%%",  "%");
+
+    message = message_progress_init (label);
+    message_progress_set_opacity (message, 1);
+}
+
+fun refresh_progress_label () {
+    update_progress_label (NULL, NULL);
+}
+
+fun animate_progress_indicator (progress, time) {
+    if (global.progress == NULL) {
+        global.progress = progress;
+    }
+
+    if ((progress - global.progress) >= env.step_delay) {
+        global.progress = progress;
+        imgobj_spinner_rotate(images.spinner);
+    }   
+}
+
+Plymouth.SetBootProgressFunction (animate_progress_indicator);
+
+
+# FSCK Messages
+
+fun device_has_progress_label (device) {
+    return (progress_label.device == device);
+}
+
+fun fsck_check (device, progress, status_string) {
+    # Create progress label if it doesn't already exist
+    if (!global.progress_label) {
+        # Increase the fsck counter
+        increase_fsck_count ();
+
+        # Set up a new label for the check
+        init_progress_label (device, status_string);
+        update_progress_label (device, progress);
+
+        return;
+    }
+
+    # Device has progress data
+    if (device_has_progress_label (device)) {
+        # Update the progress of the existing label
+        update_progress_label (device, progress);
+    }
+    else {
+        # See if there's already a slot in the queue for the device
+        local.queue_device_index = queue_look_up_by_device (device);
+
+        # See if the progress_label is available
+        if (progress_label.is_available) {
+            # If the fsck check for the device was in the queue, then remove it from the queue
+            if (local.queue_device_index >= 0) {
+                remove_fsck_from_queue (index);
+            }
+            else {
+                # Increase the fsck counter
+                increase_fsck_count ();
+            }
+
+            # Set up a new label for the check
+            init_progress_label (device, status_string);
+            update_progress_label (device, progress);
+        }
+        # If the progress_label is not available
+        else {
+            
+            # If the fsck check for the device is already in the queue
+            # just update its progress in the queue
+            if (local.queue_device_index >= 0) {
+                fsck_queue_update (local.queue_device_index, device, progress);
+            }
+            # Otherwise add the check to the queue
+            else {
+                add_fsck_to_queue (device, progress);
+                fsck_track_inc ();
+
+                refresh_progress_label ();
+            }
+        }
+    }
+}
+
+
+# Status Updates
+
+fun update_status_callback (status) {
+    if (!status) {
+        return;
+    }
+    
+    # Parse message string into list of fields
+    string_it = 0;
+    update_strings[string_it] = "";
+    for (i=0; (String(status).CharAt(i) != ""); i++) {
+        local.temp_char = String(status).CharAt(i);
+        if (temp_char != ":") {
+            update_strings[string_it] += temp_char;
+        }
+        else {
+            update_strings[++string_it] = "";
+        }
+    }
+
+    # Dispatch message to handler function
+    if (update_strings[0] == "fsck") {
+        # fsck:sda1:40
+        if ((string_it >= 2) ) {
+        
+            device = update_strings[1];
+            progress = update_strings[2];
+
+            # "Checking disk %1$d of %2$d (%3$d %% complete)"
+            status_string[0] = update_strings[3];
+            if (!status_string[0]) {
+                status_string[0] = "Checking disk %1$d of %2$d (%3$d %% complete)";
+            }
+            
+            if ((device != "") && (progress != "")) {
+                progress = AToI (progress);
+            
+                # Make sure that the fsck_queue is initialised
+                if (!global.fsck_queue) {
+                    init_queue ();
+                }
+
+                # Make sure that the fsck counter is initialised
+                if (!global.counter) {
+                    init_fsck_count ();
+                }
+                
+                # Keep track of the fsck check
+                fsck_check (device, progress, status_string);
+            }
+        }
+        # systemd-fsckd pass fsckd:<number_devices>:<progress>:<l10n_string>
+        else {
+            number_devices = AToI(update_strings[1]);
+
+            if (number_devices > 0) {
+                label = update_strings[3];
+                progress_label = get_fsck_label (label);
+
+                progress_label.sprite = Sprite (progress_label.image);
+                progress_label.sprite.SetPosition(progress_label.x, progress_label.y, 1);
+                progress_label.sprite.SetOpacity (1);
+            }
+            else {
+                if (progress_label.sprite) {
+                    progress_label.sprite.SetOpacity (0);
+                }
+            }
+        }
+    }
+}
+
+Plymouth.SetUpdateStatusFunction (update_status_callback); 
+
+
+# Refresh UI
+
+fun refresh_callback () {
+    imgobj_set_centered (media.logo);
+}
+
+Plymouth.SetRefreshFunction (refresh_callback);
+
+
+# Normal Boot Sequence
+
+fun normal_message_handler () {
+    state.window_status = "normal";
+
+    if (contexts.password) {
+        password_dialogue_opacity (0);
+        contexts.password = NULL;
+        if (message_notification[2].sprite) {
+            message_hide (2);
+        }
+        state.prompt_active = 0;
+    }
+
+    if (contexts.question) {
+        question_dialogue_opacity (0);
+        contexts.question = NULL;
+        if (message_notification[2].sprite){
+            message_hide (2);
+        }
+        state.prompt_active = 0;
+    }
+    
+    if (message_notification[1].sprite) {
+        message_show (1);    
+    }
+}
+
+Plymouth.SetDisplayNormalFunction (normal_message_handler);
+
+
+# Quit Handling
+
+fun quit_handler () {
+    imgobj_hide(media.logo);
+    switch_on_bullets (); 
+}
+
+Plymouth.SetQuitFunction(quit_handler);
