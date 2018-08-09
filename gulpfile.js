@@ -51,40 +51,32 @@ var cmd_gtk_make = 'make install';
 var cmd_gtk_make_clean = 'make distclean';
 
 gulp.task('gtk-configure', function(cb) {
-    console.log('gtk-configure 1:' + process.cwd());
     process.chdir('apps/gtk');
     return exec(cmd_gtk_autogen, function(err, stdout, stderr) {
-        console.log('gtk-configure 2:' + process.cwd());
         process.chdir('../..');
         cb(err);
     });
 });
 
 gulp.task('gtk-make', function(cb) {
-    console.log('gtk-make 1:' + process.cwd());
     process.chdir('apps/gtk');
     return exec(cmd_gtk_make, function(err, stdout, stderr) {
-        console.log('gtk-make 2:' + process.cwd());
         process.chdir('../..');
         cb(err);
     });
 });
 
 gulp.task('gtk-make-clean', function(cb) {
-    console.log('gtk-make-clean 1:' + process.cwd());
     process.chdir('apps/gtk');
     return exec(cmd_gtk_make_clean, function(err, stdout, stderr) {
-        console.log('gtk-make-clean 2:' + process.cwd());
         process.chdir('../..');
         cb(err);
     });
 });
 
 gulp.task('gtk-configure-clean', function(cb) {
-    console.log('gtk-configure-clean 1:' + process.cwd());
     process.chdir('apps/gtk');
     return exec(cmd_gtk_autogen_clean, function(err, stdout, stderr) {
-        console.log('gtk-configure-clean 2:' + process.cwd());
         process.chdir('../..');
         cb(err);
     });
