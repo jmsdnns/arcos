@@ -10,4 +10,4 @@ config.*
 configure
 install-sh
 missing
-.idea/
+*.css
